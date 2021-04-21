@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import it.polito.tdp.meteo.model.Citta;
 import it.polito.tdp.meteo.model.Rilevamento;
 
 public class MeteoDAO {
@@ -29,6 +30,8 @@ public class MeteoDAO {
 				rilevamenti.add(r);
 			}
 
+			rs.close();
+			st.close();
 			conn.close();
 			return rilevamenti;
 
@@ -42,6 +45,81 @@ public class MeteoDAO {
 	public List<Rilevamento> getAllRilevamentiLocalitaMese(int mese, String localita) {
 
 		return null;
+	}
+	
+	public String getUmiditaMediaPerMese(int mese) {
+		
+		String sql="SELECT localita, AVG(Umidita) as media "
+				+ " FROM situazione "
+				+ " WHERE MONTH(data)=? "
+				+ " GROUP BY localita ";
+		
+		
+		String s="";
+		
+		try {
+			
+			Connection conn=ConnectDB.getConnection();
+			PreparedStatement st=conn.prepareStatement(sql);
+			
+			st.setInt(1, mese);
+			
+			ResultSet rs= st.executeQuery();
+			
+			while(rs.next()) {
+				
+				s=s+rs.getString("Localita")+"  "+rs.getDouble("media")+"\n";
+			}
+			
+			rs.close();
+			st.close();
+			conn.close();
+			return s;
+			
+			
+		}catch(SQLException e) {
+			
+			e.printStackTrace();
+			
+			throw new RuntimeException(e);
+			
+		}
+		
+		
+		
+	}
+	
+	public List<Citta> getCitta(){
+		
+		String sql= "SELECT localita FROM situazione GROUP BY localita ";
+		
+		List<Citta> result= new ArrayList<Citta>();
+		
+		try {
+			
+
+			Connection conn=ConnectDB.getConnection();
+			PreparedStatement st=conn.prepareStatement(sql);
+			ResultSet rs= st.executeQuery();
+			
+			while(rs.next()) {
+				Citta c= new Citta(rs.getString("localita"));
+				result.add(c);
+				
+			}
+			rs.close();
+			st.close();
+			conn.close();
+			
+		}catch(SQLException e) {
+			
+			e.printStackTrace();
+			
+			throw new RuntimeException(e);
+			
+		}
+		
+		return result;
 	}
 
 
