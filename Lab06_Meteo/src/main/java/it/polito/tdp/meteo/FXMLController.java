@@ -5,8 +5,11 @@
 package it.polito.tdp.meteo;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.meteo.model.Citta;
 import it.polito.tdp.meteo.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -38,17 +41,41 @@ public class FXMLController {
 
     @FXML
     void doCalcolaSequenza(ActionEvent event) {
-
+    	
+    	txtResult.clear();
+    	
+    	String s="";
+    	
+    	
+    	int mese= boxMese.getValue();
+    	
+    	List<Citta> sequenza=this.model.trovaSequenza(mese);
+    	
+    	s+=sequenza.get(0).getNome();
+    	
+    	for(Citta c: sequenza) {
+    		 
+    		s+=", "+c.getNome();
+    	  	
+    	}
+    	
+    	s+=".";
+    	
+    	txtResult.appendText("Calcolo della sequenza ottima per il mese richiesto ("+mese+"):\n\n");
+    	txtResult.appendText(s);
     }
 
     @FXML
     void doCalcolaUmidita(ActionEvent event) {
     	
+    	txtResult.clear();
+    	
     	int mese= boxMese.getValue();
     	
     	String s=this.model.getUmiditaMediaPerMese(mese);
     	
-    	txtResult.setText(s);
+    	txtResult.appendText("Calcolo dell'umidità per tutte le città nel mese richiesto ("+mese+"):\n\n");
+    	txtResult.appendText(s);
 
     }
 
@@ -62,8 +89,11 @@ public class FXMLController {
     }
     
     public void setModel(Model model) {
+    	
     	this.model=model;
-    	this.boxMese.getItems().addAll(this.model.getMesi());
+    	
+		for(int i=1; i<13; i++)
+			this.boxMese.getItems().addAll(i);
     }
 }
 

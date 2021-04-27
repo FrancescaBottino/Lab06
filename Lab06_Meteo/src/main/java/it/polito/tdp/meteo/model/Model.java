@@ -15,34 +15,23 @@ public class Model {
 	private MeteoDAO meteoDao;
 	private List<Citta> soluzioneMigliore;
 	private double costoMinore;
-	
+	private List<Citta> leCitta;
 
 
 	public Model() {
 		
 		meteoDao= new MeteoDAO();	
-		
-
+		this.leCitta=meteoDao.getCitta();
+	
 	}
 	
-	
-	
-	public List<Integer> getMesi(){
-		
-		List<Integer> mesi= new ArrayList<Integer>();
-		
-		for(int i=1; i<13; i++)
-			mesi.add(i);
-		
-		return mesi;
-		
-	}
 	
 	public List<Citta> getCitta(){
-		return meteoDao.getCitta();
+		return leCitta;
 	}
 	
 	public String getUmiditaMediaPerMese(int mese) {
+		
 		return meteoDao.getUmiditaMediaPerMese(mese);
 	}
 	
@@ -54,6 +43,9 @@ public class Model {
 		
 		this.soluzioneMigliore=new ArrayList<Citta>(); //vuota
 		this.costoMinore=0;
+		
+		for(Citta c: leCitta)
+			c.setRilevamenti(meteoDao.getAllRilevamentiLocalitaMese(mese, c));
 		
 		
 		cerca(parziale, 0);
@@ -69,7 +61,7 @@ public class Model {
 		
 			double costo=calcoloCosto(parziale);
 		
-			if(costo<costoMinore) {
+			if(costo<costoMinore || soluzioneMigliore.size()==0) {
 				soluzioneMigliore= new ArrayList<Citta>(parziale);
 				costoMinore=costo;
 				return;
@@ -98,19 +90,38 @@ public class Model {
 		
 		//controlli sui giorni consecutivi
 		
+		int conta=0; 
+					
+		//calcolo quante ce ne sono già della città che devo inserire
+		
+		for(Citta cc: parziale) {
+			if(cc.equals(c))
+				conta++;
+				
+		}
+		
+		if(conta >= NUMERO_GIORNI_CITTA_MAX)
+			return false;
+		
 		if(parziale.size()==0)
 			return true;
 		
-		if(parziale.size() == NUMERO_GIORNI_TOTALI)
-			return false;
-					
-					
-		for(Citta cc: parziale) {
+		
+		if(parziale.size()<NUMERO_GIORNI_CITTA_CONSECUTIVI_MIN) { //se è 1 o 2
 			
-			
+			return parziale.get(parziale.size()-1).equals(c); //guardo ultimo elemento della lista inserito, se sono uguali va bene inserirla (true)
+		
 		}
 		
+		//caso in cui non voglio cambiare citta dopo le 3 inserite
+		if(parziale.get(parziale.size()-1).equals(c)) 
+			return true;
 		
+		
+		// se cambio città mi devo assicurare che nei tre giorni precedenti sono rimasto fermo 
+		if (parziale.get(parziale.size()-1).equals(parziale.get(parziale.size()-2)) && parziale.get(parziale.size()-2).equals(parziale.get(parziale.size()-3)))
+			return true;
+					
 		
 		return false;
 	}
@@ -121,17 +132,22 @@ public class Model {
 		
 		double costo=0.0;	
 	
-		for(int i=0; i<parziale.size(); i++) {
+		for(int gg=1; gg<=NUMERO_GIORNI_TOTALI; gg++) {
 			
-			if(parziale.get(i).getNome() != parziale.get(i+1).getNome())
-				costo+=COST;
+			Citta c=parziale.get(gg-1);
+			double umid=c.getRilevamenti().get(gg-1).getUmidita();
+			costo+=umid;
 			
-			
-			costo+=parziale.get(i).getRilevamenti().get(i).getUmidita();
-			
-				
 			
 		}
+		
+		for(int gg=2; gg<=NUMERO_GIORNI_TOTALI; gg++) {
+			
+			if(!parziale.get(gg-1).equals(parziale.get(gg-2)))
+				costo+=COST;
+		}
+		
+		
 		
 		return costo;
 	}
